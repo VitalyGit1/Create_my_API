@@ -1,42 +1,70 @@
 package main
 
 import (
-	"encoding/json"
-	"net/http"
-	"os"
-	"strings"
+	"encoding/json" //Это подключение пакета encoding/json для преобразования структуры Go в JSON.
+	"net/http"      //Пакет для создания HTTP-сервера. Без него нельзя написать API. Он умеет: запускать сервер; принимать запросы; отправлять ответы.
+	"os"            //Этот пакет позволяет общаться с операционной системой. В твоём коде он используется только один раз. Чтобы получить: PORT
+	"strings"       //Этот пакет нужен для работы со строками. Он умеет убрать начало строки. Из: /strings/length/Привет в: Привет
 )
 
-type Response struct {
-	Length int `json:"length"`
+type Response struct { //type - создаю новый тип данных. Response - имя нового типа. struct - Структура, объединяет несколько полей в один объект.
+
+	Length int `json:"length"` /*
+			Length - название поля структуры. У тебя структура:
+			type Response struct {
+				Length int
+			}
+		То есть у ответа есть одно поле: Length
+			`json:"length"` - Это называется тег структуры. Он нужен только пакету encoding/json. То есть клиент увидит поле length с маленькой буквы.
+	*/
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func handler(w http.ResponseWriter, r *http.Request) { /*
+			w http.ResponseWriter - объект, через который мы отправляем ответ клиенту. Всё, что записано в w, отправится пользователю.
+		r *http.Request - объект запроса. Внутри него хранится всё, что прислал клиент.
+	*/
 
 	word := strings.TrimPrefix(
-		r.URL.Path,
-		"/strings/length/",
+		r.URL.Path,         //Это первый аргумент функции. То есть строка: /strings/length/Привет
+		"/strings/length/", //Это второй аргумент. Он говорит: Удали это начало строки.
 	)
 
-	result := Response{
-		Length: len([]rune(word)),
+	result := Response{ //Создаётся структура. Переменная называется result
+		Length: len([]rune(word)), /*
+			[]rune(word) - Go превращает строку в последовательность символов. Не байтов. Именно символов.
+			len(...) - Считает количество элементов.
+			Length: - Записываем число в поле структуры. Получается:
+				Response{
+					Length: 6,
+				}
+		*/
 	}
 
-	json.NewEncoder(w).Encode(result)
+	json.NewEncoder(w).Encode(result) /*
+		json - Это пакет.
+		NewEncoder - Создать кодировщик.
+		(w) - Куда отправлять данные?
+		.Encode(result) - Преобразовать в JSON
+	*/
 }
 
-func main() {
+func main() { //Это главная функция. Именно отсюда начинается выполнение программы
 
-	http.HandleFunc(
-		"/strings/length/",
-		handler,
-	)
+	http.HandleFunc( //Регистрируем обработчик. То есть говорим серверу: Если придёт запрос на этот путь, вызывай функцию handler
+		"/strings/length/", //Это адрес
+		handler,            //Это функция, которую нужно вызвать
+	) //Заканчиваем регистрацию
 
-	port := os.Getenv("PORT")
+	port := os.Getenv("PORT") //Получаем переменную окружения PORT. Например: 10000 или 8080
 
-	if port == "" {
-		port = "8080"
+	if port == "" { //Проверяем: Пустая ли строка?
+		port = "8080" //Если пустая — используем порт 8080
 	}
 
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(":"+port, nil) /*
+		Это строка, которая запускает HTTP-сервер.
+		":"+port — использовать порт, например :8080.
+		nil — использовать маршруты, которые мы зарегистрировали через http.HandleFunc.
+		После выполнения этой строки программа начинает ждать входящие HTTP-запросы.
+	*/
 }
